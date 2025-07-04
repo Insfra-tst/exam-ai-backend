@@ -46,4 +46,4 @@ The application uses MySQL database with the following tables:
 This backend is designed to be deployed on Render.com with the following configuration:
 - Root Directory: `render-backend`
 - Build Command: `npm install`
-- Start Command: `node server.js` 
+- Start Command: `node server.js` # Updated README for MongoDB
