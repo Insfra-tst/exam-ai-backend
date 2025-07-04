@@ -36,13 +36,13 @@ app.use(cors({
     origin: [
         'https://elaraix.com',
         'https://www.elaraix.com',
-        'https://exam-analyzer.vercel.app',
+        'https://exam-ai-frontend-three.vercel.app',
         'http://localhost:3000',
         'http://localhost:3001'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization, Origin, Accept, X-Requested-With']
 }));
 
 // Body parsing middleware
