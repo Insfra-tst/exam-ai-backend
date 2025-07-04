@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const database = require('./database');
+const database = require('./database-mongo');
 
 // Generate JWT token
 const generateToken = (userId) => {

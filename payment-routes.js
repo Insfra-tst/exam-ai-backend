@@ -1,6 +1,6 @@
 const express = require('express');
 const auth = require('./auth');
-const database = require('./database');
+const database = require('./database-mongo');
 const TokenManager = require('./token-manager');
 const PaymentProcessor = require('./payment-processor');
 

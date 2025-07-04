@@ -6,7 +6,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 
 // Import modules
-const database = require('./database');
+const database = require('./database-mongo');
 const TokenManager = require('./token-manager');
 const PaymentProcessor = require('./payment-processor');
 
