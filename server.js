@@ -214,13 +214,13 @@ app.use('*', (req, res) => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('🛑 SIGTERM received, shutting down gracefully...');
-    database.closeConnections();
+    database.closeDatabase();
     process.exit(0);
 });
 
 process.on('SIGINT', () => {
     console.log('🛑 SIGINT received, shutting down gracefully...');
-    database.closeConnections();
+    database.closeDatabase();
     process.exit(0);
 });
 
@@ -228,7 +228,7 @@ process.on('SIGINT', () => {
 async function startServer() {
     try {
         // Initialize database
-        await database.initialize();
+        await database.initializeDatabase();
         console.log('✅ Database initialized successfully');
         
         // Start server
