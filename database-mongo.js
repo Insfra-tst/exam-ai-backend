@@ -171,6 +171,21 @@ const userOperations = {
         return user;
     },
 
+    // Update user verification status
+    async updateUserVerification(userId, verified) {
+        const user = await User.findOneAndUpdate(
+            { id: userId },
+            { verified, updatedAt: new Date() },
+            { new: true }
+        );
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        return user;
+    },
+
     // Verify email
     async verifyEmail(token) {
         const verificationToken = await VerificationToken.findOne({
@@ -361,4 +376,4 @@ module.exports = {
     TokenUsage,
     UserSubject,
     VerificationToken
-};
+}; 

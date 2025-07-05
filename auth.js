@@ -3,15 +3,24 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const database = require('./database-mongo');
 
+// Export verificationTokens for external access (disabled)
+module.exports.verificationTokens = new Map();
+
+// Email functions disabled
+const createTransporter = () => {
+    console.log('⚠️  Email functions disabled');
+    return null;
+};
+
 // Generate JWT token
 const generateToken = (userId) => {
-    return jwt.sign({ userId }, process.env.JWT_SECRET || 'default_jwt_secret_change_in_production', { expiresIn: '7d' });
+    return jwt.sign({ userId }, process.env.JWT_SECRET || 'default_jwt_secret', { expiresIn: '7d' });
 };
 
 // Verify JWT token
 const verifyToken = (token) => {
     try {
-        return jwt.verify(token, process.env.JWT_SECRET || 'default_jwt_secret_change_in_production');
+        return jwt.verify(token, process.env.JWT_SECRET || 'default_jwt_secret');
     } catch (error) {
         return null;
     }
@@ -27,41 +36,105 @@ const comparePassword = async (password, hashedPassword) => {
     return await bcrypt.compare(password, hashedPassword);
 };
 
-// Create user
+// Send verification email (disabled)
+const sendVerificationEmail = async (email, token) => {
+    console.log('⚠️  Email verification disabled');
+    return true; // Return true to avoid blocking signup
+};
+
+// Create user using MongoDB
 const createUser = async (userData) => {
     const { email, password, name, provider = 'local' } = userData;
     
-    const autoVerify = process.env.NODE_ENV !== 'production' || provider !== 'local';
-    const hashedPassword = password ? await hashPassword(password) : null;
-    
-    const user = await database.createUser({
-        id: uuidv4(),
-        email,
-        password: hashedPassword,
-        name,
-        provider,
-        verified: autoVerify ? 1 : 0
-    });
+    try {
+        const user = await database.userOperations.createUser({
+            email,
+            password,
+            name,
+            provider
+        });
 
-    return user;
+        // Email verification disabled - mark as verified
+        if (provider === 'local') {
+            await database.userOperations.updateUserVerification(user.id, true);
+        }
+
+        return user;
+    } catch (error) {
+        throw error;
+    }
 };
 
-// Find user by email
+// Find user by email using MongoDB
 const findUserByEmail = async (email) => {
-    return await database.findUserByEmail(email);
+    try {
+        return await database.userOperations.findUserByEmail(email);
+    } catch (error) {
+        console.error('Error finding user by email:', error);
+        return null;
+    }
 };
 
-// Find user by ID
+// Find user by ID using MongoDB
 const findUserById = async (userId) => {
-    return await database.findUserById(userId);
+    try {
+        return await database.userOperations.findUserById(userId);
+    } catch (error) {
+        console.error('Error finding user by ID:', error);
+        return null;
+    }
 };
 
-// Update user onboarding data
+// Verify email (disabled)
+const verifyEmail = (token) => {
+    console.log('⚠️  Email verification disabled');
+    throw new Error('Email verification is disabled');
+};
+
+// Update user onboarding data using MongoDB
 const updateUserOnboarding = async (userId, examData) => {
-    return await database.updateUserOnboarding(userId, examData);
+    try {
+        return await database.userOperations.updateUserOnboarding(userId, examData);
+    } catch (error) {
+        throw error;
+    }
 };
 
-// Authentication middleware
+// Subject management using MongoDB
+const getUserSubjects = async (userId) => {
+    try {
+        const user = await database.userOperations.findUserById(userId);
+        return user.subjects || [];
+    } catch (error) {
+        throw error;
+    }
+};
+
+const addUserSubject = async (userId, subjectData) => {
+    try {
+        return await database.userOperations.addUserSubject(userId, subjectData);
+    } catch (error) {
+        throw error;
+    }
+};
+
+const updateUserSubject = async (userId, subjectId, subjectData) => {
+    try {
+        return await database.userOperations.updateUserSubject(userId, subjectId, subjectData);
+    } catch (error) {
+        throw error;
+    }
+};
+
+const deleteUserSubject = async (userId, subjectId) => {
+    try {
+        return await database.userOperations.deleteUserSubject(userId, subjectId);
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Middleware to authenticate requests
 const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -72,44 +145,49 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = verifyToken(token);
     if (!decoded) {
-        return res.status(403).json({ error: 'Invalid or expired token' });
+        return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
+    // Verify user exists
     const user = await findUserById(decoded.userId);
     if (!user) {
-        return res.status(403).json({ error: 'User not found' });
+        return res.status(401).json({ error: 'User not found' });
     }
 
     req.user = user;
     next();
 };
 
-// Require verification middleware
+// Middleware to require email verification (disabled)
 const requireVerification = (req, res, next) => {
-    if (!req.user.verified) {
-        return res.status(403).json({ error: 'Email verification required' });
-    }
-    next();
+    console.log('⚠️  Email verification requirement disabled');
+    next(); // Skip verification requirement
 };
 
-// Require onboarding middleware
+// Middleware to require onboarding completion
 const requireOnboarding = (req, res, next) => {
-    if (!req.user.onboarding_completed) {
-        return res.status(403).json({ error: 'Onboarding required' });
+    if (!req.user.onboardingCompleted) {
+        return res.status(403).json({ error: 'Onboarding not completed' });
     }
     next();
 };
 
 module.exports = {
+    generateToken,
+    verifyToken,
+    hashPassword,
+    comparePassword,
+    sendVerificationEmail,
     createUser,
     findUserByEmail,
     findUserById,
-    getUserById: findUserById,
+    verifyEmail,
     updateUserOnboarding,
+    getUserSubjects,
+    addUserSubject,
+    updateUserSubject,
+    deleteUserSubject,
     authenticateToken,
     requireVerification,
-    requireOnboarding,
-    generateToken,
-    verifyToken,
-    comparePassword
+    requireOnboarding
 }; 
