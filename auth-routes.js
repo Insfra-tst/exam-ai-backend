@@ -5,16 +5,30 @@ const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const TokenManager = require('./token-manager');
-const OpenAI = require('openai');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const database = require('./database-mongo');
 
-// Initialize OpenAI
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+   // Initialize OpenAI only when needed
+   let openai = null;
+   const getOpenAI = () => {
+       if (!process.env.OPENAI_API_KEY) {
+           return null;
+       }
+       if (!openai) {
+           try {
+               const OpenAI = require('openai');
+               openai = new OpenAI({
+                   apiKey: process.env.OPENAI_API_KEY
+               });
+           } catch (error) {
+               console.error('Failed to initialize OpenAI:', error.message);
+               return null;
+           }
+       }
+       return openai;
+   };
 
 // Initialize token manager
 const tokenManager = new TokenManager(database);
